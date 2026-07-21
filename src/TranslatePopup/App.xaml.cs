@@ -84,6 +84,7 @@ public partial class App : Application
 
         var dip = DpiHelper.PhysicalToDip(rawX, rawY);
         var window = new TranslationWindow(_translationService, _settingsService, _languagesCache, text);
+        window.SettingsRequested += OpenSettings;
         window.SetScreenPosition(dip.X, dip.Y);
         window.Show();
         window.Activate();

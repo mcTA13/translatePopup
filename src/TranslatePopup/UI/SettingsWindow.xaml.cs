@@ -67,13 +67,11 @@ public partial class SettingsWindow : Window
             ?? _settings.DefaultTargetLanguage;
 
         _settingsService.Save(_settings);
-        DialogResult = true;
         Close();
     }
 
     private void CancelButton_Click(object sender, RoutedEventArgs e)
     {
-        DialogResult = false;
         Close();
     }
 }

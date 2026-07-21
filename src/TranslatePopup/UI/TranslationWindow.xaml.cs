@@ -11,6 +11,8 @@ public partial class TranslationWindow : Window
     private readonly string _sourceText;
     private bool _isReady;
 
+    public event Action? SettingsRequested;
+
     public TranslationWindow(
         TranslationService translationService,
         SettingsService settingsService,
@@ -75,5 +77,10 @@ public partial class TranslationWindow : Window
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    private void SettingsButton_Click(object sender, RoutedEventArgs e)
+    {
+        SettingsRequested?.Invoke();
     }
 }

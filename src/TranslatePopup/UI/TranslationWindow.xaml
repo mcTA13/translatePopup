@@ -3,69 +3,194 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="翻訳結果"
-        Width="360" Height="260"
-        MinWidth="220" MinHeight="140"
+        Width="440" Height="340"
+        MinWidth="300" MinHeight="220"
         WindowStyle="None"
         ResizeMode="CanResize"
         ShowInTaskbar="False"
-        AllowsTransparency="False"
-        Background="White"
+        AllowsTransparency="True"
+        Background="Transparent"
         Topmost="True"
         WindowStartupLocation="Manual">
     <shell:WindowChrome.WindowChrome>
-        <shell:WindowChrome CaptionHeight="36"
-                             ResizeBorderThickness="6"
+        <shell:WindowChrome CaptionHeight="56"
+                             ResizeBorderThickness="8"
                              GlassFrameThickness="0"
-                             CornerRadius="0"
+                             CornerRadius="10"
                              UseAeroCaptionButtons="False"/>
     </shell:WindowChrome.WindowChrome>
 
-    <Border BorderBrush="#CCCCCC" BorderThickness="1">
+    <Window.Resources>
+        <Style x:Key="TitleBarButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#5B6472"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#EDF0F5"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#DFE4EC"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="12,0,8,0"/>
+            <Setter Property="Background" Value="#EEF1F6"/>
+            <Setter Property="BorderBrush" Value="#2B7DE9"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="ToggleButton"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                          Focusable="False" ClickMode="Press">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="6"/>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                                <ToggleButton.Background>
+                                    <Binding Path="Background" RelativeSource="{RelativeSource TemplatedParent}"/>
+                                </ToggleButton.Background>
+                                <ToggleButton.BorderBrush>
+                                    <Binding Path="BorderBrush" RelativeSource="{RelativeSource TemplatedParent}"/>
+                                </ToggleButton.BorderBrush>
+                                <ToggleButton.BorderThickness>
+                                    <Binding Path="BorderThickness" RelativeSource="{RelativeSource TemplatedParent}"/>
+                                </ToggleButton.BorderThickness>
+                            </ToggleButton>
+                            <ContentPresenter x:Name="ContentSite"
+                                               IsHitTestVisible="False"
+                                               Content="{TemplateBinding SelectionBoxItem}"
+                                               ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                               Margin="{TemplateBinding Padding}"
+                                               VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                            <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                       Foreground="#5B6472" IsHitTestVisible="False"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <Popup x:Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+                                <Border Background="White" CornerRadius="6" Padding="4"
+                                        MinWidth="{TemplateBinding ActualWidth}" MaxHeight="260">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.25" Color="#404A5A"/>
+                                    </Border.Effect>
+                                    <ScrollViewer SnapsToDevicePixels="True">
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="Bg" Background="Transparent" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#EEF1F6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="White" CornerRadius="10">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="24" ShadowDepth="4" Direction="270" Opacity="0.22" Color="#2B3542"/>
+        </Border.Effect>
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="36"/>
+                <RowDefinition Height="56"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Title bar: language selector (top-left) and close button (top-right) -->
-            <Grid Grid.Row="0" Background="#F3F3F3">
+            <!-- Title bar: language selector (top-left), settings gear + close (top-right) -->
+            <Grid Grid.Row="0" Margin="8,5">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <ComboBox x:Name="TargetLanguageComboBox"
                           Grid.Column="0"
-                          Width="140"
-                          Margin="6,4"
+                          Width="160"
+                          Style="{StaticResource ModernComboBoxStyle}"
                           VerticalAlignment="Center"
                           DisplayMemberPath="Name"
-                          shell:WindowChrome.IsHitTestVisibleInChrome="True"
                           SelectionChanged="TargetLanguageComboBox_SelectionChanged"/>
 
-                <Button x:Name="CloseButton"
+                <Button x:Name="SettingsButton"
                         Grid.Column="2"
-                        Width="36" Height="36"
-                        Content="&#xD7;"
+                        Style="{StaticResource TitleBarButtonStyle}"
+                        FontFamily="Segoe MDL2 Assets"
                         FontSize="16"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                        Content="&#xE713;"
+                        ToolTip="設定"
+                        Click="SettingsButton_Click"/>
+
+                <Button x:Name="CloseButton"
+                        Grid.Column="3"
+                        Style="{StaticResource TitleBarButtonStyle}"
+                        Width="46" Height="46"
+                        FontSize="22"
+                        Content="&#xD7;"
+                        ToolTip="閉じる"
                         Click="CloseButton_Click"/>
             </Grid>
 
-            <!-- Result area: fills remaining space and resizes with the window -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="10">
-                <Grid>
-                    <TextBlock x:Name="ResultTextBlock"
-                               TextWrapping="Wrap"
-                               FontSize="14"/>
-                    <TextBlock x:Name="StatusTextBlock"
-                               TextWrapping="Wrap"
-                               Foreground="Gray"/>
-                </Grid>
-            </ScrollViewer>
+            <!-- Result area: rounded card that fills and resizes with the window -->
+            <Border Grid.Row="1" Background="#F5F7FA" CornerRadius="8" Margin="12,0,12,12"
+                    BorderBrush="#2B7DE9" BorderThickness="1">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
+                    <Grid>
+                        <TextBlock x:Name="ResultTextBlock"
+                                   TextWrapping="Wrap"
+                                   FontSize="18"
+                                   LineHeight="26"
+                                   Foreground="#20262E"/>
+                        <TextBlock x:Name="StatusTextBlock"
+                                   TextWrapping="Wrap"
+                                   FontSize="15"
+                                   Foreground="#8A93A1"/>
+                    </Grid>
+                </ScrollViewer>
+            </Border>
         </Grid>
     </Border>
 </Window>
