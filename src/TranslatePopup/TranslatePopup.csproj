@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>TranslatePopup</AssemblyName>
+    <RootNamespace>TranslatePopup</RootNamespace>
+    <!-- DPI awareness is intentionally set via app.manifest (WPF convention); WinForms is only
+         used for NotifyIcon/Screen, so its own HighDpiMode API is not applicable here. -->
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
+  </PropertyGroup>
+
+</Project>

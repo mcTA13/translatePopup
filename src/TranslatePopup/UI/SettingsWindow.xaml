@@ -1,0 +1,38 @@
+<Window x:Class="TranslatePopup.UI.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="TranslatePopup 設定"
+        Height="320" Width="420"
+        WindowStartupLocation="CenterScreen"
+        ShowInTaskbar="False"
+        ResizeMode="CanResize">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Azure Translator APIキー" Margin="0,0,0,4"/>
+        <TextBox Grid.Row="1" x:Name="ApiKeyTextBox" Margin="0,0,0,12"/>
+
+        <TextBlock Grid.Row="2" Text="リージョン（マルチサービスリソースの場合のみ）" Margin="0,0,0,4"/>
+        <TextBox Grid.Row="3" x:Name="RegionTextBox" Margin="0,0,0,12"/>
+
+        <TextBlock Grid.Row="4" Text="既定の翻訳先言語" Margin="0,0,0,4"/>
+        <ComboBox Grid.Row="5" x:Name="DefaultLanguageComboBox" Margin="0,0,0,12" DisplayMemberPath="Name"/>
+
+        <TextBlock Grid.Row="6" x:Name="StatusTextBlock" Foreground="Gray" TextWrapping="Wrap" VerticalAlignment="Top"/>
+
+        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="TestConnectionButton" Content="テスト接続" Width="90" Margin="0,0,8,0" Click="TestConnectionButton_Click"/>
+            <Button x:Name="SaveButton" Content="保存" Width="80" Margin="0,0,8,0" Click="SaveButton_Click"/>
+            <Button x:Name="CancelButton" Content="キャンセル" Width="80" Click="CancelButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
