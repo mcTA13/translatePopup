@@ -10,6 +10,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>TranslatePopup</AssemblyName>
     <RootNamespace>TranslatePopup</RootNamespace>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- DPI awareness is intentionally set via app.manifest (WPF convention); WinForms is only
          used for NotifyIcon/Screen, so its own HighDpiMode API is not applicable here. -->
     <NoWarn>$(NoWarn);WFAC010</NoWarn>

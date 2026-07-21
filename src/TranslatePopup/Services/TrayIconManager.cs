@@ -25,7 +25,7 @@ public sealed class TrayIconManager : IDisposable
 
         _notifyIcon = new NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = LoadAppIcon(),
             Text = "TranslatePopup",
             Visible = true,
             ContextMenuStrip = contextMenu,
@@ -38,5 +38,27 @@ public sealed class TrayIconManager : IDisposable
     {
         _notifyIcon.Visible = false;
         _notifyIcon.Dispose();
+    }
+
+    // Extracted from the exe itself (the same .ico embedded via <ApplicationIcon>), so the tray
+    // icon and the exe's own icon are guaranteed to always be identical.
+    private static Icon LoadAppIcon()
+    {
+        try
+        {
+            // ProcessPath points at the apphost .exe (which carries the embedded icon); the
+            // assembly Location would instead point at the managed .dll, which has none.
+            var exePath = Environment.ProcessPath;
+            if (string.IsNullOrEmpty(exePath))
+            {
+                exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            }
+
+            return Icon.ExtractAssociatedIcon(exePath) ?? SystemIcons.Application;
+        }
+        catch
+        {
+            return SystemIcons.Application;
+        }
     }
 }

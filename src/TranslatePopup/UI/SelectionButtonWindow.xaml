@@ -15,25 +15,22 @@
             Width="44" Height="44"
             Padding="0"
             Cursor="Hand"
+            Focusable="False"
             PreviewMouseLeftButtonDown="TranslateButton_PreviewMouseLeftButtonDown"
             PreviewMouseLeftButtonUp="TranslateButton_PreviewMouseLeftButtonUp">
-        <Button.Resources>
-            <Style TargetType="Border">
-                <Setter Property="CornerRadius" Value="22"/>
-            </Style>
-        </Button.Resources>
         <Button.Template>
             <ControlTemplate TargetType="Button">
-                <Border Background="#2B7DE9" CornerRadius="12" x:Name="Bg">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.3" Color="#1B3B6B"/>
-                    </Border.Effect>
-                    <TextBlock Text="訳" Foreground="White" FontSize="19" FontWeight="Bold"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border Background="White" BorderBrush="#2B7DE9" BorderThickness="7.5" CornerRadius="12" x:Name="Bg">
+                    <!-- Hand-drawn double arrow (not a font glyph) so every stroke is the same thickness;
+                         kept small and light so it doesn't compete with the now much bolder frame. -->
+                    <Path Data="M1.5,3.5 L13.5,3.5 M13.5,3.5 L10,0.5 M13.5,3.5 L10,6.5 M13.5,9.5 L1.5,9.5 M1.5,9.5 L5,6.5 M1.5,9.5 L5,12.5"
+                          Stroke="#2B7DE9" StrokeThickness="1.75"
+                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <ControlTemplate.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter TargetName="Bg" Property="Background" Value="#1E5FBF"/>
+                        <Setter TargetName="Bg" Property="Background" Value="#EAF1FC"/>
                     </Trigger>
                 </ControlTemplate.Triggers>
             </ControlTemplate>
