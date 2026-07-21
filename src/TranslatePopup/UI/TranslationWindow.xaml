@@ -22,8 +22,8 @@
 
     <Window.Resources>
         <Style x:Key="TitleBarButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="40"/>
-            <Setter Property="Height" Value="40"/>
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="46"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="#5B6472"/>
@@ -53,7 +53,7 @@
             <Setter Property="Height" Value="36"/>
             <Setter Property="Padding" Value="12,0,8,0"/>
             <Setter Property="Background" Value="#EEF1F6"/>
-            <Setter Property="BorderBrush" Value="#2B7DE9"/>
+            <Setter Property="BorderBrush" Value="#9AA3B2"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
             <Setter Property="Template">
@@ -139,7 +139,7 @@
             </Grid.RowDefinitions>
 
             <!-- Title bar: language selector (top-left), settings gear + close (top-right) -->
-            <Grid Grid.Row="0" Margin="8,5">
+            <Grid Grid.Row="0" Margin="12,5,8,5">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -167,7 +167,6 @@
                 <Button x:Name="CloseButton"
                         Grid.Column="3"
                         Style="{StaticResource TitleBarButtonStyle}"
-                        Width="46" Height="46"
                         FontSize="22"
                         Content="&#xD7;"
                         ToolTip="閉じる"
@@ -176,7 +175,7 @@
 
             <!-- Result area: rounded card that fills and resizes with the window -->
             <Border Grid.Row="1" Background="#F5F7FA" CornerRadius="8" Margin="12,0,12,12"
-                    BorderBrush="#2B7DE9" BorderThickness="1">
+                    BorderBrush="#9AA3B2" BorderThickness="1">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
                     <Grid>
                         <TextBlock x:Name="ResultTextBlock"
