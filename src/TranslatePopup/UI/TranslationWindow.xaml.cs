@@ -31,7 +31,39 @@ public partial class TranslationWindow : Window
             ?? languages.FirstOrDefault();
         _isReady = true;
 
+        if (settings.TranslationWindowWidth is > 0 && settings.TranslationWindowHeight is > 0)
+        {
+            Width = settings.TranslationWindowWidth.Value;
+            Height = settings.TranslationWindowHeight.Value;
+        }
+
         Loaded += (_, _) => _ = TranslateAsync();
+        Closing += (_, _) => SaveWindowSize();
+    }
+
+    private void SaveWindowSize()
+    {
+        double width, height;
+        if (WindowState == WindowState.Normal)
+        {
+            width = ActualWidth;
+            height = ActualHeight;
+        }
+        else
+        {
+            width = RestoreBounds.Width;
+            height = RestoreBounds.Height;
+        }
+
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        var current = _settingsService.Load();
+        current.TranslationWindowWidth = width;
+        current.TranslationWindowHeight = height;
+        _settingsService.Save(current);
     }
 
     public void SetScreenPosition(double left, double top)

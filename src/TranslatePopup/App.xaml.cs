@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Threading;
+using System.Windows;
 using TranslatePopup.Interop;
 using TranslatePopup.Models;
 using TranslatePopup.Selection;
@@ -10,17 +11,37 @@ namespace TranslatePopup;
 
 public partial class App : Application
 {
+    // Fixed GUID so the name can't collide with anything else on the machine.
+    private const string SingleInstanceMutexName = @"Global\TranslatePopup-9F3B2C7A-4E1D-4A6B-9C3D-2F8E7A1B5C4D";
+
+    private Mutex? _singleInstanceMutex;
     private SettingsService _settingsService = null!;
     private TranslationService _translationService = null!;
     private TrayIconManager _trayIconManager = null!;
     private SelectionButtonWindow _buttonWindow = null!;
     private SelectionWatcher _selectionWatcher = null!;
     private SettingsWindow? _settingsWindow;
+    private TranslationWindow? _translationWindow;
     private IReadOnlyList<TranslationLanguage>? _languagesCache;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        _singleInstanceMutex = new Mutex(initiallyOwned: true, name: SingleInstanceMutexName, out var createdNew);
+        if (!createdNew)
+        {
+            System.Windows.MessageBox.Show(
+                "TranslatePopup は既に起動しています。タスクトレイのアイコンをご確認ください。",
+                "TranslatePopup",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+
+            _singleInstanceMutex.Dispose();
+            _singleInstanceMutex = null;
+            Shutdown();
+            return;
+        }
 
         // Without this, an exception anywhere in an async-void handler (selection click, settings
         // load, etc.) would otherwise tear the whole process down silently - there's no visible
@@ -82,9 +103,20 @@ public partial class App : Application
 
         _languagesCache ??= await _translationService.GetSupportedLanguagesAsync();
 
+        // Only one translation window at a time: the previous one is superseded, not stacked.
+        _translationWindow?.Close();
+
         var dip = DpiHelper.PhysicalToDip(rawX, rawY);
         var window = new TranslationWindow(_translationService, _settingsService, _languagesCache, text);
         window.SettingsRequested += OpenSettings;
+        window.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(_translationWindow, window))
+            {
+                _translationWindow = null;
+            }
+        };
+        _translationWindow = window;
         window.SetScreenPosition(dip.X, dip.Y);
         window.Show();
         window.Activate();
@@ -96,6 +128,8 @@ public partial class App : Application
     {
         _selectionWatcher.Dispose();
         _trayIconManager.Dispose();
+        _singleInstanceMutex?.ReleaseMutex();
+        _singleInstanceMutex?.Dispose();
         Shutdown();
     }
 }
