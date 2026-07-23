@@ -136,6 +136,20 @@ public sealed class SelectionWatcher : IDisposable
     {
         try
         {
+            // If the click landed on a different top-level window than the one that currently
+            // holds keyboard focus, our synthesized Ctrl+C would go to that (unrelated, still
+            // focused) window instead of wherever the user actually clicked. That's how e.g.
+            // triple-clicking empty desktop space can "select" nothing at the click point yet
+            // still surface a stale selection some background text editor never cleared. A
+            // genuine in-app selection (including a legitimate triple-click select-all) always
+            // has the click landing inside the window that's already focused, so this only
+            // filters out clicks that couldn't possibly be selecting anything real.
+            if (!IsClickInsideFocusedWindow(upEvt))
+            {
+                DiagnosticLog.Write("HandleSelectionAsync skipped: click is outside the focused window");
+                return;
+            }
+
             var seqBefore = ClipboardHelper.GetSequenceNumber();
             var snapshot = await ClipboardHelper.TrySnapshotAsync();
 
@@ -184,6 +198,20 @@ public sealed class SelectionWatcher : IDisposable
         }
 
         _buttonWindow.HideButton();
+    }
+
+    private static bool IsClickInsideFocusedWindow(MouseHookEvent evt)
+    {
+        var point = new POINT { X = evt.RawX, Y = evt.RawY };
+        var hwndAtPoint = NativeMethods.WindowFromPoint(point);
+        if (hwndAtPoint == nint.Zero)
+        {
+            return false;
+        }
+
+        var rootAtPoint = NativeMethods.GetAncestor(hwndAtPoint, NativeMethods.GA_ROOT);
+        var foreground = NativeMethods.GetForegroundWindow();
+        return rootAtPoint != nint.Zero && rootAtPoint == foreground;
     }
 
     private static double Distance(MouseHookEvent a, MouseHookEvent b)
