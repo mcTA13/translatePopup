@@ -20,12 +20,15 @@ internal sealed class MouseHook : IDisposable
         _proc = HookCallback;
     }
 
-    public void Start()
+    /// <summary>Installs the global hook. Returns false if installation failed (e.g. blocked by
+    /// security software), in which case no selection events will ever fire.</summary>
+    public bool Start()
     {
         using var curProcess = System.Diagnostics.Process.GetCurrentProcess();
         using var curModule = curProcess.MainModule;
         var hMod = NativeMethods.GetModuleHandle(curModule?.ModuleName);
         _hookId = NativeMethods.SetWindowsHookEx(NativeMethods.WH_MOUSE_LL, _proc, hMod, 0);
+        return _hookId != nint.Zero;
     }
 
     private nint HookCallback(int nCode, nint wParam, nint lParam)

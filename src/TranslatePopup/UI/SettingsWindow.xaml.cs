@@ -61,12 +61,17 @@ public partial class SettingsWindow : Window
 
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
-        _settings.ApiKey = ApiKeyTextBox.Text.Trim();
-        _settings.Region = RegionTextBox.Text.Trim();
-        _settings.DefaultTargetLanguage = (DefaultLanguageComboBox.SelectedItem as TranslationLanguage)?.Code
-            ?? _settings.DefaultTargetLanguage;
+        // Reload rather than saving the possibly-stale `_settings` captured when this window
+        // opened - otherwise fields another window wrote in the meantime (e.g. the translation
+        // window's remembered size) would be silently reverted by this save.
+        var current = _settingsService.Load();
+        current.ApiKey = ApiKeyTextBox.Text.Trim();
+        current.Region = RegionTextBox.Text.Trim();
+        current.DefaultTargetLanguage = (DefaultLanguageComboBox.SelectedItem as TranslationLanguage)?.Code
+            ?? current.DefaultTargetLanguage;
 
-        _settingsService.Save(_settings);
+        _settingsService.Save(current);
+        _settings = current;
         Close();
     }
 

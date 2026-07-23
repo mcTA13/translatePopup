@@ -2,9 +2,11 @@ using System.IO;
 
 namespace TranslatePopup.Services;
 
-/// <summary>Temporary diagnostic logger for tracking down the intermittent "translate button
-/// doesn't reopen the window" issue. Writes to %AppData%\TranslatePopup\logs\debug.log, truncated
-/// fresh on each app start so a single log always covers one reproduction session.</summary>
+/// <summary>Logs rare/exceptional failures (unhandled exceptions, global hook installation
+/// failures) that would otherwise be invisible in an app with no console and no visible main
+/// window. Writes to %AppData%\TranslatePopup\logs\debug.log, truncated fresh on each app start.
+/// Not for routine/hot-path tracing - anything that fires on every click or keystroke belongs
+/// somewhere else, or nowhere.</summary>
 internal static class DiagnosticLog
 {
     private static readonly string LogPath = Path.Combine(

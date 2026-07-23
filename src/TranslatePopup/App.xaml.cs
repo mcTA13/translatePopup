@@ -1,6 +1,5 @@
 ﻿using System.Threading;
 using System.Windows;
-using TranslatePopup.Interop;
 using TranslatePopup.Models;
 using TranslatePopup.Selection;
 using TranslatePopup.Services;
@@ -23,6 +22,7 @@ public partial class App : Application
     private SettingsWindow? _settingsWindow;
     private TranslationWindow? _translationWindow;
     private IReadOnlyList<TranslationLanguage>? _languagesCache;
+    private bool _isHandlingSelectionClick;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -92,36 +92,48 @@ public partial class App : Application
 
     private async void OnSelectionButtonClicked(string text, int rawX, int rawY)
     {
-        Services.DiagnosticLog.Write($"OnSelectionButtonClicked text.len={text.Length} point=({rawX},{rawY})");
-
-        var settings = _settingsService.Load();
-        if (string.IsNullOrWhiteSpace(settings.ApiKey))
+        // The only await below (the first-ever language-list fetch) creates a window where a
+        // second selection+click could re-enter this method before the first call has finished
+        // setting up _translationWindow, letting two windows race for that field. Once cached,
+        // everything past that point is synchronous, so this guard only ever matters once.
+        if (_isHandlingSelectionClick)
         {
-            OpenSettings();
             return;
         }
 
-        _languagesCache ??= await _translationService.GetSupportedLanguagesAsync();
-
-        // Only one translation window at a time: the previous one is superseded, not stacked.
-        _translationWindow?.Close();
-
-        var dip = DpiHelper.PhysicalToDip(rawX, rawY);
-        var window = new TranslationWindow(_translationService, _settingsService, _languagesCache, text);
-        window.SettingsRequested += OpenSettings;
-        window.Closed += (_, _) =>
+        _isHandlingSelectionClick = true;
+        try
         {
-            if (ReferenceEquals(_translationWindow, window))
+            var settings = _settingsService.Load();
+            if (string.IsNullOrWhiteSpace(settings.ApiKey))
             {
-                _translationWindow = null;
+                OpenSettings();
+                return;
             }
-        };
-        _translationWindow = window;
-        window.SetScreenPosition(dip.X, dip.Y);
-        window.Show();
-        window.Activate();
 
-        Services.DiagnosticLog.Write("OnSelectionButtonClicked window shown");
+            _languagesCache ??= await _translationService.GetSupportedLanguagesAsync();
+
+            // Only one translation window at a time: the previous one is superseded, not stacked.
+            _translationWindow?.Close();
+
+            var window = new TranslationWindow(_translationService, _settingsService, _languagesCache, text);
+            window.SettingsRequested += OpenSettings;
+            window.Closed += (_, _) =>
+            {
+                if (ReferenceEquals(_translationWindow, window))
+                {
+                    _translationWindow = null;
+                }
+            };
+            _translationWindow = window;
+            window.SetScreenPosition(rawX, rawY);
+            window.Show();
+            window.Activate();
+        }
+        finally
+        {
+            _isHandlingSelectionClick = false;
+        }
     }
 
     private void ExitApplication()

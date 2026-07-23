@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Windows.Threading;
 using Clipboard = System.Windows.Clipboard;
 using DataObject = System.Windows.DataObject;
 
@@ -9,10 +10,39 @@ internal static class ClipboardHelper
     private const int MaxRetries = 5;
     private const int RetryDelayMs = 40;
 
+    // OLE clipboard access (especially enumerating/copying every format on the clipboard) can
+    // block for a surprising stretch of time. Doing that on the UI thread - which also owns the
+    // global mouse hook - would freeze all mouse input system-wide for as long as it takes, which
+    // is exactly why dragging felt like it briefly hung. Running it on its own STA thread instead
+    // keeps the hook thread free the whole time.
+    private static readonly Dispatcher WorkerDispatcher = CreateWorkerDispatcher();
+
+    private static Dispatcher CreateWorkerDispatcher()
+    {
+        Dispatcher? dispatcher = null;
+        using var ready = new ManualResetEventSlim(false);
+
+        var thread = new Thread(() =>
+        {
+            dispatcher = Dispatcher.CurrentDispatcher;
+            ready.Set();
+            Dispatcher.Run();
+        })
+        {
+            IsBackground = true,
+            Name = "ClipboardWorker",
+        };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+
+        ready.Wait();
+        return dispatcher!;
+    }
+
     public static uint GetSequenceNumber() => NativeMethods.GetClipboardSequenceNumber();
 
     /// <summary>Captures the current clipboard contents (all formats) so they can be restored later.</summary>
-    public static async Task<DataObject?> TrySnapshotAsync()
+    public static Task<DataObject?> TrySnapshotAsync() => WorkerDispatcher.InvokeAsync(() =>
     {
         for (var i = 0; i < MaxRetries; i++)
         {
@@ -41,14 +71,14 @@ internal static class ClipboardHelper
             }
             catch (COMException)
             {
-                await Task.Delay(RetryDelayMs).ConfigureAwait(true);
+                Thread.Sleep(RetryDelayMs);
             }
         }
 
         return null;
-    }
+    }).Task;
 
-    public static async Task RestoreAsync(DataObject? snapshot)
+    public static Task RestoreAsync(DataObject? snapshot) => WorkerDispatcher.InvokeAsync(() =>
     {
         if (snapshot is null)
         {
@@ -64,12 +94,12 @@ internal static class ClipboardHelper
             }
             catch (COMException)
             {
-                await Task.Delay(RetryDelayMs).ConfigureAwait(true);
+                Thread.Sleep(RetryDelayMs);
             }
         }
-    }
+    }).Task;
 
-    public static async Task<string?> TryGetTextAsync()
+    public static Task<string?> TryGetTextAsync() => WorkerDispatcher.InvokeAsync(() =>
     {
         for (var i = 0; i < MaxRetries; i++)
         {
@@ -79,12 +109,12 @@ internal static class ClipboardHelper
             }
             catch (COMException)
             {
-                await Task.Delay(RetryDelayMs).ConfigureAwait(true);
+                Thread.Sleep(RetryDelayMs);
             }
         }
 
-        return null;
-    }
+        return (string?)null;
+    }).Task;
 
     /// <summary>Polls the clipboard sequence number until it changes from <paramref name="before"/> or the timeout elapses.</summary>
     public static async Task<bool> WaitForChangeAsync(uint before, TimeSpan timeout)

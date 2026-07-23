@@ -14,7 +14,8 @@ internal sealed class ForegroundWindowWatcher : IDisposable
         _proc = OnWinEvent;
     }
 
-    public void Start()
+    /// <summary>Installs the hook. Returns false if installation failed.</summary>
+    public bool Start()
     {
         _hookId = NativeMethods.SetWinEventHook(
             NativeMethods.EVENT_SYSTEM_FOREGROUND,
@@ -24,6 +25,7 @@ internal sealed class ForegroundWindowWatcher : IDisposable
             0,
             0,
             NativeMethods.WINEVENT_OUTOFCONTEXT);
+        return _hookId != nint.Zero;
     }
 
     private void OnWinEvent(nint hWinEventHook, uint eventType, nint hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)

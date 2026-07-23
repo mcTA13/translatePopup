@@ -43,8 +43,6 @@ public sealed class SelectionWatcher : IDisposable
 
     private void OnForegroundChanged()
     {
-        DiagnosticLog.Write($"[hook] ForegroundChanged buttonVisible={_buttonWindow.IsVisible} captured={_buttonWindow.IsCaptured}");
-
         // Hiding the button while it currently owns mouse capture (i.e. mid-click) would silently
         // cancel the pending click - WPF never delivers the matching Up event to a hidden window's
         // element, so the user's click just vanishes. Only hide when nothing is in-flight.
@@ -56,8 +54,15 @@ public sealed class SelectionWatcher : IDisposable
 
     public void Start()
     {
-        _mouseHook.Start();
-        _foregroundWatcher.Start();
+        if (!_mouseHook.Start())
+        {
+            DiagnosticLog.Write("SelectionWatcher.Start: failed to install the global mouse hook - selection detection will not work.");
+        }
+
+        if (!_foregroundWatcher.Start())
+        {
+            DiagnosticLog.Write("SelectionWatcher.Start: failed to install the foreground-window watcher.");
+        }
     }
 
     private bool IsWithinButtonBounds(System.Windows.Point dip)
@@ -82,14 +87,8 @@ public sealed class SelectionWatcher : IDisposable
         _lastDown = evt;
         _lastDownTimeUtc = DateTime.UtcNow;
 
-        var withinBounds = IsWithinButtonBounds(evt.DipPoint);
-        if (_buttonWindow.IsVisible)
-        {
-            DiagnosticLog.Write($"[hook] Down dip=({evt.DipPoint.X:F1},{evt.DipPoint.Y:F1}) withinBounds={withinBounds}");
-        }
-
         // A click that isn't on the translate button clears any previously shown selection immediately.
-        if (!withinBounds)
+        if (!IsWithinButtonBounds(evt.DipPoint))
         {
             _buttonWindow.HideButton();
         }
@@ -102,13 +101,7 @@ public sealed class SelectionWatcher : IDisposable
         var down = _downEvt;
         _downEvt = null;
 
-        var withinBounds = IsWithinButtonBounds(evt.DipPoint);
-        if (_buttonWindow.IsVisible)
-        {
-            DiagnosticLog.Write($"[hook] Up dip=({evt.DipPoint.X:F1},{evt.DipPoint.Y:F1}) withinBounds={withinBounds}");
-        }
-
-        if (withinBounds)
+        if (IsWithinButtonBounds(evt.DipPoint))
         {
             // Let the button's own handler deal with this; not a selection gesture.
             return;
@@ -136,17 +129,16 @@ public sealed class SelectionWatcher : IDisposable
     {
         try
         {
-            // If the click landed on a different top-level window than the one that currently
-            // holds keyboard focus, our synthesized Ctrl+C would go to that (unrelated, still
-            // focused) window instead of wherever the user actually clicked. That's how e.g.
-            // triple-clicking empty desktop space can "select" nothing at the click point yet
-            // still surface a stale selection some background text editor never cleared. A
-            // genuine in-app selection (including a legitimate triple-click select-all) always
-            // has the click landing inside the window that's already focused, so this only
-            // filters out clicks that couldn't possibly be selecting anything real.
-            if (!IsClickInsideFocusedWindow(upEvt))
+            // Checked against where the gesture started (mouse-down), not where it ended: a
+            // normal drag-select routinely finishes with the mouse released past the source
+            // window's edge (near a border, or dragging onto another monitor), and that must
+            // still count as a real selection. What actually distinguishes a genuine selection
+            // from e.g. triple-clicking empty desktop space while some background editor still
+            // holds an old, never-cleared selection is whether the click *began* inside the
+            // window that currently has keyboard focus - that's where our synthesized Ctrl+C
+            // will actually go.
+            if (!IsClickInsideFocusedWindow(downEvt))
             {
-                DiagnosticLog.Write("HandleSelectionAsync skipped: click is outside the focused window");
                 return;
             }
 
@@ -165,7 +157,6 @@ public sealed class SelectionWatcher : IDisposable
             await ClipboardHelper.RestoreAsync(snapshot);
 
             text = text?.Trim();
-            DiagnosticLog.Write($"HandleSelectionAsync changed={changed} text.len={text?.Length ?? -1}");
             if (string.IsNullOrEmpty(text))
             {
                 return;
@@ -190,8 +181,6 @@ public sealed class SelectionWatcher : IDisposable
 
     private void OnTranslateRequested()
     {
-        DiagnosticLog.Write($"OnTranslateRequested pendingText.len={_pendingText?.Length ?? -1} pendingPoint={_pendingPoint}");
-
         if (!string.IsNullOrEmpty(_pendingText))
         {
             SelectionButtonClicked?.Invoke(_pendingText, _pendingPoint.X, _pendingPoint.Y);

@@ -72,8 +72,10 @@ public sealed class TranslationService
         {
             response = await Http.SendAsync(request, cancellationToken).ConfigureAwait(false);
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
+            // Only a real HttpClient.Timeout lands here; a deliberate cancellation (e.g. the
+            // caller switching languages again) should propagate as-is, not be reported as an error.
             throw new TranslationException("翻訳リクエストがタイムアウトしました。ネットワーク接続を確認してください。");
         }
         catch (HttpRequestException)

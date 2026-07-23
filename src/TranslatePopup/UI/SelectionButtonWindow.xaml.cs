@@ -2,7 +2,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using TranslatePopup.Interop;
-using TranslatePopup.Services;
 
 namespace TranslatePopup.UI;
 
@@ -24,11 +23,6 @@ public partial class SelectionButtonWindow : Window
             _hwnd = new WindowInteropHelper(this).Handle;
             WindowStyleHelper.MakeToolWindowNonActivating(_hwnd);
         };
-
-        // Diagnostic only: if capture is lost without our own ReleaseMouseCapture() having run
-        // first (logged separately in the Up handler), something external stole/cancelled it.
-        TranslateButton.LostMouseCapture += (_, _) =>
-            DiagnosticLog.Write("Button LostMouseCapture");
     }
 
     /// <summary>Shows (or repositions, if already visible) the button near the given raw screen point.</summary>
@@ -40,8 +34,12 @@ public partial class SelectionButtonWindow : Window
         var topLeftDip = DpiHelper.PhysicalToDip(workArea.Left, workArea.Top);
         var bottomRightDip = DpiHelper.PhysicalToDip(workArea.Right, workArea.Bottom);
 
-        var left = Math.Clamp(dip.X + OffsetDip, topLeftDip.X, bottomRightDip.X - Width);
-        var top = Math.Clamp(dip.Y + OffsetDip, topLeftDip.Y, bottomRightDip.Y - Height);
+        // Math.Clamp throws if min > max, which a work area narrower/shorter than the button
+        // itself would trigger; Math.Max keeps the upper bound from ever dropping below the lower one.
+        var maxLeft = Math.Max(topLeftDip.X, bottomRightDip.X - Width);
+        var maxTop = Math.Max(topLeftDip.Y, bottomRightDip.Y - Height);
+        var left = Math.Clamp(dip.X + OffsetDip, topLeftDip.X, maxLeft);
+        var top = Math.Clamp(dip.Y + OffsetDip, topLeftDip.Y, maxTop);
 
         Left = left;
         Top = top;
@@ -60,8 +58,6 @@ public partial class SelectionButtonWindow : Window
             NativeMethods.SetWindowPos(_hwnd, NativeMethods.HWND_TOPMOST, 0, 0, 0, 0,
                 NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE);
         }
-
-        DiagnosticLog.Write($"ShowNear raw=({rawX},{rawY}) dip=({dip.X:F1},{dip.Y:F1}) hwnd={_hwnd}");
     }
 
     public void HideButton()
@@ -78,7 +74,6 @@ public partial class SelectionButtonWindow : Window
     private void TranslateButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         TranslateButton.CaptureMouse();
-        DiagnosticLog.Write($"Button PreviewMouseLeftButtonDown captured={TranslateButton.IsMouseCaptured}");
         e.Handled = true;
     }
 
@@ -92,8 +87,6 @@ public partial class SelectionButtonWindow : Window
         var position = e.GetPosition(TranslateButton);
         var isOverButton = position.X >= 0 && position.X <= TranslateButton.ActualWidth
             && position.Y >= 0 && position.Y <= TranslateButton.ActualHeight;
-
-        DiagnosticLog.Write($"Button PreviewMouseLeftButtonUp pos=({position.X:F1},{position.Y:F1}) isOverButton={isOverButton}");
 
         e.Handled = true;
 
