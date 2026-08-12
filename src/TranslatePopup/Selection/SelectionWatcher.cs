@@ -142,6 +142,16 @@ public sealed class SelectionWatcher : IDisposable
                 return;
             }
 
+            // Confirm there is an actual, non-empty text selection before synthesizing Ctrl+C.
+            // Without this, a stray drag over a game's rendered canvas, an empty terminal click,
+            // or a desktop icon drag would still fire Ctrl+C into the foreground app - which is
+            // not harmless everywhere (e.g. a console with nothing selected treats Ctrl+C as a
+            // break/interrupt signal, not copy).
+            if (!SelectionProbe.HasNonEmptyTextSelection(downEvt.RawX, downEvt.RawY))
+            {
+                return;
+            }
+
             var seqBefore = ClipboardHelper.GetSequenceNumber();
             var snapshot = await ClipboardHelper.TrySnapshotAsync();
 
